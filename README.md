@@ -636,220 +636,191 @@ public class Main {
 ## 4. Practical Applications
 
 ### Learning Objective
-See how abstraction works in a real-world example.
+Understand the power of **programming to an interface** - writing code that works with any implementation of an interface, making your code flexible and easy to extend.
 
-### Simple Example: Drawing Application
+### Why Program to an Interface?
+When you write methods that accept an interface as a parameter, you can pass ANY class that implements that interface. This means:
+- You can add new implementations without changing existing code
+- Your code becomes more flexible and reusable
+- Testing becomes easier (you can create mock implementations)
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FF5722', 'primaryTextColor': '#BF360C', 'primaryBorderColor': '#E64A19', 'lineColor': '#9C27B0', 'secondaryColor': '#4CAF50', 'tertiaryColor': '#FBE9E7', 'classText': '#BF360C'}}}%%
-classDiagram
-    class Drawable {
-        <<interface>>
-        +draw() void
-        +erase() void
-    }
-    
-    class DrawingTool {
-        <<abstract>>
-        #String color
-        #int thickness
-        +DrawingTool(String color, int thickness)
-        +startDrawing()* void
-        +stopDrawing()* void
-        +changeColor(String newColor) void
-    }
-    
-    class Pencil {
-        +Pencil(String color, int thickness)
-        +startDrawing() void
-        +stopDrawing() void
-        +draw() void
-        +erase() void
-    }
-    
-    class Brush {
-        +Brush(String color, int thickness)
-        +startDrawing() void
-        +stopDrawing() void
-        +draw() void
-        +erase() void
-    }
-    
-    DrawingTool <|-- Pencil : extends
-    DrawingTool <|-- Brush : extends
-    Drawable <|.. Pencil : implements
-    Drawable <|.. Brush : implements
-    
-    note for DrawingTool "🎨 Abstract Class\nShared tool properties"
-    note for Drawable "✏️ Interface\nDrawing capabilities"
-```
+### The SOLID Principles: Open/Closed Principle
+
+This approach follows one of the most important software design principles - the **Open/Closed Principle (OCP)**, which is the "O" in **SOLID**:
+
+> **"Software entities should be open for extension, but closed for modification."**
+
+What does this mean in practice?
+
+| Concept | Meaning | Example |
+|---------|---------|---------|
+| **Open for Extension** | You can add new functionality | Add a new `EmailService` class that implements `MessageService` |
+| **Closed for Modification** | You don't need to change existing code | The `NotificationManager` class doesn't need ANY changes to work with the new `EmailService` |
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#673AB7', 'primaryTextColor': '#311B92', 'primaryBorderColor': '#512DA8', 'lineColor': '#4CAF50', 'secondaryColor': '#FF9800', 'tertiaryColor': '#EDE7F6'}}}%%
-flowchart TB
-    subgraph app["🎨 DRAWING APPLICATION ARCHITECTURE"]
-        style app fill:#EDE7F6,stroke:#673AB7,stroke-width:3px,color:#311B92
+flowchart LR
+    subgraph solid["🏗️ OPEN/CLOSED PRINCIPLE"]
+        style solid fill:#EDE7F6,stroke:#673AB7,stroke-width:3px,color:#311B92
         
-        subgraph layer1["Layer 1: Contracts"]
-            style layer1 fill:#E3F2FD,stroke:#2196F3,stroke-width:2px,color:#0D47A1
-            INT["🔷 Drawable Interface<br/>Defines draw() and erase()"]
+        subgraph closed["🔒 CLOSED for Modification"]
+            style closed fill:#FFEBEE,stroke:#EF5350,stroke-width:2px,color:#B71C1C
+            NM["NotificationManager<br/>Never needs to change!"]
         end
         
-        subgraph layer2["Layer 2: Blueprints"]
-            style layer2 fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#BF360C
-            ABS["🔶 DrawingTool Abstract Class<br/>Shared properties & methods"]
+        subgraph open["🔓 OPEN for Extension"]
+            style open fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px,color:#1B5E20
+            NEW1["+ EmailService"]
+            NEW2["+ SlackService"]
+            NEW3["+ TelegramService"]
+            NEW4["+ Any Future Service!"]
         end
         
-        subgraph layer3["Layer 3: Implementations"]
-            style layer3 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px,color:#1B5E20
-            PEN["✏️ Pencil"]
-            BRU["🖌️ Brush"]
-            MAR["🖍️ Marker"]
-        end
-        
-        layer1 --> layer2
-        layer2 --> layer3
+        open --> |"implements<br/>MessageService"| closed
     end
     
-    classDef contractNode fill:#BBDEFB,stroke:#1976D2,stroke-width:2px,color:#0D47A1
-    classDef blueprintNode fill:#FFE0B2,stroke:#E65100,stroke-width:2px,color:#BF360C
-    classDef implNode fill:#C8E6C9,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef closedNode fill:#FFCDD2,stroke:#EF5350,stroke-width:2px,color:#B71C1C
+    classDef openNode fill:#C8E6C9,stroke:#388E3C,stroke-width:2px,color:#1B5E20
     
-    class INT contractNode
-    class ABS blueprintNode
-    class PEN,BRU,MAR implNode
+    class NM closedNode
+    class NEW1,NEW2,NEW3,NEW4 openNode
 ```
 
-```java
-// Interface for basic drawing operations
-public interface Drawable {
-    void draw();
-    void erase();
-}
-
-// Abstract class for all drawing tools
-public abstract class DrawingTool {
-    protected String color;
-    protected int thickness;
-    
-    public DrawingTool(String color, int thickness) {
-        this.color = color;
-        this.thickness = thickness;
-    }
-    
-    public abstract void startDrawing();
-    public abstract void stopDrawing();
-    
-    public void changeColor(String newColor) {
-        this.color = newColor;
-        System.out.println("Changed color to " + newColor);
-    }
-}
-
-// A pencil tool
-public class Pencil extends DrawingTool implements Drawable {
-    public Pencil(String color, int thickness) {
-        super(color, thickness);
-    }
-    
-    @Override
-    public void startDrawing() {
-        System.out.println("Starting to draw with pencil");
-    }
-    
-    @Override
-    public void stopDrawing() {
-        System.out.println("Stopped drawing with pencil");
-    }
-    
-    @Override
-    public void draw() {
-        System.out.println("Drawing with " + color + " pencil");
-    }
-    
-    @Override
-    public void erase() {
-        System.out.println("Erasing pencil marks");
-    }
-}
-```
-
-### Final DIY Exercise: Library System
-Create a simple library system:
+> **Why is this important?** In real-world applications, modifying existing code can introduce bugs. By following the Open/Closed Principle, you can add new features without risking breaking what already works!
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#795548', 'primaryTextColor': '#3E2723', 'primaryBorderColor': '#5D4037', 'lineColor': '#E91E63', 'secondaryColor': '#009688', 'tertiaryColor': '#EFEBE9', 'classText': '#3E2723'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#00BCD4', 'primaryTextColor': '#006064', 'primaryBorderColor': '#0097A7', 'lineColor': '#4CAF50', 'secondaryColor': '#FF9800', 'tertiaryColor': '#E0F7FA'}}}%%
+flowchart TB
+    subgraph concept["📱 PROGRAMMING TO AN INTERFACE"]
+        style concept fill:#E0F7FA,stroke:#00BCD4,stroke-width:3px,color:#006064
+        
+        METHOD["sendNotification(MessageService service)"]
+        
+        subgraph implementations["Any Implementation Works!"]
+            style implementations fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px,color:#1B5E20
+            SMS["📱 SMS"]
+            WA["💬 WhatsApp"]
+            EMAIL["📧 Email"]
+            SLACK["💼 Slack"]
+        end
+        
+        SMS --> METHOD
+        WA --> METHOD
+        EMAIL --> METHOD
+        SLACK --> METHOD
+    end
+    
+    classDef methodNode fill:#B2EBF2,stroke:#00ACC1,stroke-width:2px,color:#006064
+    classDef implNode fill:#C8E6C9,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class METHOD methodNode
+    class SMS,WA,EMAIL,SLACK implNode
+```
+
+### DIY Exercise: Messaging System
+Create a messaging system that demonstrates programming to an interface:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#9C27B0', 'primaryTextColor': '#4A148C', 'primaryBorderColor': '#7B1FA2', 'lineColor': '#FF9800', 'secondaryColor': '#4CAF50', 'tertiaryColor': '#F3E5F5', 'classText': '#4A148C'}}}%%
 classDiagram
-    class Borrowable {
+    class MessageService {
         <<interface>>
-        +checkOut() void
-        +returnItem() void
-        +isAvailable() boolean
+        +sendMessage(String message) void
+        +receiveMessage() String
     }
     
-    class LibraryItem {
-        <<abstract>>
-        #String title
-        #String author
-        #boolean isCheckedOut
-        +LibraryItem(String title, String author)
-        +displayInfo()* void
+    class WhatsAppService {
+        +sendMessage(String message) void
+        +receiveMessage() String
     }
     
-    class Book {
-        +Book(String title, String author)
-        +displayInfo() void
-        +checkOut() void
-        +returnItem() void
-        +isAvailable() boolean
+    class SMSService {
+        +sendMessage(String message) void
+        +receiveMessage() String
     }
     
-    class DVD {
-        +DVD(String title, String author)
-        +displayInfo() void
-        +checkOut() void
-        +returnItem() void
-        +isAvailable() boolean
-    }
+    MessageService <|.. WhatsAppService : implements
+    MessageService <|.. SMSService : implements
     
-    LibraryItem <|-- Book : extends
-    LibraryItem <|-- DVD : extends
-    Borrowable <|.. Book : implements
-    Borrowable <|.. DVD : implements
-    
-    note for LibraryItem "📚 Abstract Class\nBook IS-A LibraryItem"
-    note for Borrowable "📖 Interface\nBook CAN be borrowed"
+    note for MessageService "📨 Interface\nDefines messaging contract"
+    note for WhatsAppService "💬 WhatsApp Implementation"
+    note for SMSService "📱 SMS Implementation"
 ```
 
-1. Create an interface `Borrowable`:
+#### Step 1: Create the `MessageService` interface
 ```java
-public interface Borrowable {
-    void checkOut();
-    void returnItem();
-    boolean isAvailable();
+public interface MessageService {
+    void sendMessage(String message);
+    String receiveMessage();
 }
 ```
 
-2. Create an abstract class `LibraryItem`:
+#### Step 2: Create a `WhatsAppService` class that implements `MessageService`
+- Implement `sendMessage()` to print: "WhatsApp: Sending message - [message]"
+- Implement `receiveMessage()` to return: "WhatsApp: New message received!"
+
+#### Step 3: Create an `SMSService` class that implements `MessageService`
+- Implement `sendMessage()` to print: "SMS: Sending text - [message]"
+- Implement `receiveMessage()` to return: "SMS: New text received!"
+
+#### Step 4: Create a `NotificationManager` class with a method that takes the interface as a parameter
 ```java
-public abstract class LibraryItem {
-    protected String title;
-    protected String author;
-    protected boolean isCheckedOut;
+public class NotificationManager {
     
-    public LibraryItem(String title, String author) {
-        this.title = title;
-        this.author = author;
-        this.isCheckedOut = false;
+    // This method accepts ANY MessageService implementation!
+    public void sendNotification(MessageService service, String message) {
+        System.out.println("Preparing to send notification...");
+        service.sendMessage(message);
+        System.out.println("Notification sent successfully!");
     }
-    
-    public abstract void displayInfo();
 }
 ```
 
-3. Create a `Book` class that extends `LibraryItem` and implements `Borrowable`
+#### Step 5: Test everything in the `Main` class
+```java
+public class Main {
+    public static void main(String[] args) {
+        // Create the notification manager
+        NotificationManager manager = new NotificationManager();
+        
+        // Create different messaging services
+        MessageService whatsapp = new WhatsAppService();
+        MessageService sms = new SMSService();
+        
+        // Use the SAME method with DIFFERENT implementations!
+        System.out.println("--- Sending via WhatsApp ---");
+        manager.sendNotification(whatsapp, "Hello from WhatsApp!");
+        
+        System.out.println();
+        
+        System.out.println("--- Sending via SMS ---");
+        manager.sendNotification(sms, "Hello from SMS!");
+        
+        // Test receiving messages
+        System.out.println();
+        System.out.println(whatsapp.receiveMessage());
+        System.out.println(sms.receiveMessage());
+    }
+}
+```
 
-This system shows how abstraction helps organize code in a real-world application while keeping the implementation simple and understandable.
+**Expected Output:**
+```
+--- Sending via WhatsApp ---
+Preparing to send notification...
+WhatsApp: Sending message - Hello from WhatsApp!
+Notification sent successfully!
+
+--- Sending via SMS ---
+Preparing to send notification...
+SMS: Sending text - Hello from SMS!
+Notification sent successfully!
+
+WhatsApp: New message received!
+SMS: New text received!
+```
+
+> **Key Takeaway:** The `NotificationManager.sendNotification()` method doesn't care whether it receives a `WhatsAppService` or `SMSService` - it just knows how to work with any `MessageService`. This is the power of programming to an interface!
 
 ## Summary
 Through these examples and exercises, we've learned that:
